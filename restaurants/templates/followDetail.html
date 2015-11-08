@@ -1,0 +1,245 @@
+      {% extends 'base.html' %}
+
+      {% block head %}
+
+              {% load staticfiles %}
+              <link href="{% static 'css/bootstrap-datetimepicker.css' %}" rel="stylesheet" />
+            <script src="{% static 'js/moment.min.js' %}"></script>
+              <script src="{% static 'js/bootstrap-datetimepicker.js' %}"></script>
+
+
+      {% endblock %}
+
+
+      {% block content %}
+          <form action="" method="post">
+          {% csrf_token %}
+        <div id="page-wrapper">
+            <div class="container-fluid">
+                <div class="row">
+                    <div class="col-lg-12">
+                        <h1 class="page-header">選菜</h1>
+                    </div>
+                    <!-- /.col-lg-12 -->
+
+                {% if isOrderAble %}
+                    <div class="col-lg-3" >
+                        <div class="panel panel-red">
+                            <div class="panel-heading">
+                                收單倒數
+                            </div>
+                            <div class="panel-body text-center">
+                               <span id="hour" class="text-danger"></span>
+                                時 <span id="min" class="text-danger"></span>
+                                分 <span id="sec" class="text-danger"></span>
+                                秒
+                            </div>
+
+                        </div>
+                     </div>
+                {% endif %}
+
+
+                        <div class="col-lg-12">
+                            <div class="panel panel-default">
+                            <div class="panel-heading">
+                                開團資訊
+                            </div>
+                            <!-- /.panel-heading -->
+                            <div class="panel-body">
+                                <p><strong>開團者 :</strong> {{ orderMain.createId }} </p>
+                                <p><strong>店名 :</strong> {{ orderMain.restaurant }} </p>
+                                <p><strong>訂餐日期 :</strong> {{ orderMain.orderDate }} </p>
+                                <span><strong>收單時間 :</strong> {{ orderMain.orderDueDate }}</span>&nbsp;
+                                <button type="button" class="btn btn-outline btn-warning" data-toggle="modal" data-target="#myModal" >edit</button>
+                                {% if not isOrderAble %}
+                                     <button type="button" class="btn btn-outline btn-danger">已收單</button>
+                                {% endif %}
+                                <p><string>memo :</string> {{ orderMain.memo }}</p>
+
+
+                                <div id="includeFollowList">
+                                    {% include 'includeFollowList.html' %}
+                                </div>
+
+
+                                <!-- Modal -->
+                                <div class="modal fade" id="myModal" tabindex="-1" role="dialog" aria-labelledby="myModalLabel" aria-hidden="true">
+                                    <div class="modal-dialog">
+                                        <div class="modal-content">
+                                            <div class="modal-header">
+                                                <button type="button" class="close" data-dismiss="modal" aria-hidden="true">&times;</button>
+                                                <h4 class="modal-title" id="myModalLabel">調整收單時間</h4>
+                                            </div>
+                                            <div class="modal-body">
+                                                <input type="text" id="txtOrderDueDate" value="{{ orderMain.orderDueDate }}" />
+                                                 
+
+                                            </div>
+                                            <div class="modal-footer">
+                                                <button type="button" class="btn btn-default" data-dismiss="modal">Close</button>
+                                                <button type="button" class="btn btn-primary" id="btnEditOrderDueDate" >Save changes</button>
+                                            </div>
+                                        </div>
+                                        <!-- /.modal-content -->
+                                    </div>
+                                    <!-- /.modal-dialog -->
+                                </div>
+                                <!-- /.modal -->
+
+
+
+                            </div>
+                            </div>
+                        </div>
+
+                {% if isOrderAble %}
+                    <div class="col-lg-12">
+                            <div class="panel panel-default">
+                            <div class="panel-heading">
+                                選菜
+                            </div>
+                            <!-- /.panel-heading -->
+                            <div class="panel-body">
+
+
+                                <table class="table table-striped">
+                                    <thead>
+                                        <tr>
+                                            <td>菜名</td>
+                                            <td>價格</td>
+                                            <td>備註</td>
+                                            <td>點菜</td>
+                                        </tr>
+                                    </thead>
+                                    <tbody>
+
+                                        {% for food in foods %}
+                                            <tr>
+                                                <td>{{ food.name }}
+                                                    {% if food.memo %}
+                                                    ({{ food.memo }})
+                                                    {% endif %}
+                                                </td>
+                                                <td>{{ food.price }}</td>
+                                                <td><input type="text" class="txtMemo" value="" /></td>
+                                                <td>
+
+                                                     <button type="button" foodId="{{ food.id }}" class="btn btn-success btnOrder">order</button>
+
+                                                </td>
+                                            </tr>
+                                        {% empty %}
+                                            <p>無人訂</p>
+                                        {% endfor %}
+
+                                    </tbody>
+                                </table>
+
+
+
+                            </div>
+                            </div>
+                        </div>
+
+                    {% endif %}
+
+
+                </div>
+                <!-- /.row -->
+            </div>
+            <!-- /.container-fluid -->
+        </div>
+              <input type="hidden" id="hidOrderMainId" value="{{ orderMain.id }}" />
+
+      </form>
+
+        <script type="text/javascript">
+            var csrftoken = getCookie('csrftoken');
+
+            $(function(){
+                initial();
+
+                $('.btnOrder').click(function(){
+                    var orderMainId = '';
+                    var foodId = '';
+                    var txtMemo ='';
+                    var $txtMemo='';
+                    var orderMainId = $('#hidOrderMainId').val();
+                    foodId = $(this).attr('foodId');
+                    $txtMemo = $(this).parent().parent().find('.txtMemo');
+                    txtMemo = $txtMemo.val();
+
+                    $.ajaxSetup({
+                        beforeSend: function(xhr, settings) {
+                            if (!csrfSafeMethod(settings.type) && !this.crossDomain) {
+                                xhr.setRequestHeader("X-CSRFToken", csrftoken);
+                            }
+                        }
+                    });
+                    $.ajax({
+                        type:"post",
+                        url:'/saveOrderDetail/',
+                        data:{'orderMainId':orderMainId,'foodId':foodId,'txtMemo':txtMemo},
+                        success:function(result){
+                               //alert(result);
+                            $('#includeFollowList').html(result);
+                        },
+                        error:function(){
+                            alert('error');
+                        }
+                    });
+                });
+
+                $('#txtOrderDueDate').datetimepicker({
+                   format:'YYYY-MM-DD HH:mm'
+                });
+
+                //編輯收單時間
+                $('#btnEditOrderDueDate').click(function(){
+                    var orderMainId = $('#hidOrderMainId').val();
+
+                });
+
+            });
+
+            var countdownid;
+            //var startDate = new Date('2010/11/11 08:00');
+            var orderDueDate = '{{ dueDate }}';
+            var nowDate ='{{ todayDatetime }}';
+            var startDate = new Date(nowDate);
+            var endDate = new Date(orderDueDate);
+            var spantime = (endDate - startDate)/1000;
+
+            function initial(){ countdownfunc(); }
+            function countdownfunc(){
+                     var d = Math.floor(spantime / (24 * 3600));
+                     var h = Math.floor((spantime % (24*3600))/3600);
+                     var m = Math.floor((spantime % 3600)/(60));
+                     var s = Math.floor(spantime%60);
+
+                     if(spantime>0){
+                        $("#hour").text(h+(d*24));
+                        $("#min").text(m);
+                        $("#sec").text(s);
+                     }else{ // 避免倒數變成負的
+                        $("#hour").text(0);
+                        $("#min").text(0);
+                        $("#sec").text(0);
+                     }
+                if (spantime < 1){
+                    alert("倒數結束");
+                    clearTimeout(countdownid);
+                }else{
+                    spantime--;
+                    if(countdownid){
+                        clearTimeout(countdownid);
+                    }
+                    countdownid=setTimeout(countdownfunc,1000);
+                }
+            }
+
+
+        </script>
+
+      {% endblock %}

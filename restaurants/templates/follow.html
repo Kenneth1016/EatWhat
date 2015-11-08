@@ -1,0 +1,110 @@
+      {% extends 'base.html' %}
+
+      {% block head %}
+
+              {% load staticfiles %}
+              <link href="{% static 'css/bootstrap-datetimepicker.css' %}" rel="stylesheet" />
+                    <script src="{% static 'js/moment.min.js' %}"></script>
+              <script src="{% static 'js/bootstrap-datetimepicker.js' %}"></script>
+      {% endblock %}
+
+
+      {% block content %}
+          <form action="" method="post">
+          {% csrf_token %}
+        <div id="page-wrapper">
+            <div class="container-fluid">
+                <div class="row">
+                    <div class="col-lg-12">
+                        <h1 class="page-header">選一個團來跟</h1>
+                    </div>
+                    <!-- /.col-lg-12 -->
+
+                        <div class="col-lg-12">
+                            <div class="panel panel-default">
+                            <div class="panel-heading">
+                                選好就跟
+                            </div>
+                            <!-- /.panel-heading -->
+                            <div class="panel-body">
+
+
+                                <table class="table table-striped">
+                                    <thead>
+                                        <tr>
+                                            <th>開團人</th>
+                                            <th>開團日期</th>
+                                            <th>店名</th>
+                                            <th>+</th>
+                                        </tr>
+                                    </thead>
+                                    <tbody>
+
+                                        {% for main in orderMains %}
+                                                <tr>
+                                                <td>{{ main.createId }}</td>
+                                                <td>{{ main.orderDate }}
+
+                                                    {% if main.orderDate == todayDate %}
+                                                        <p class="fa fa-heart"> 今天</p>
+                                                    {% endif %}
+
+                                                </td>
+                                                <td>
+
+                                                    <div class="tooltip-demo">
+                                                        <div data-toggle="tooltip" data-placement="left" title="{{ main.restaurant.food_set.all }}">{{ main.restaurant }}</div>
+
+                                                    </div>
+                                                </td>
+
+                                                <td>
+                                                    {% if main.orderable %}
+                                                        <button  onClick="javascript:location.href='/followDetail/{{ main.id }}'"  type="button" class="btn btn-outline btn-danger">跟</button>
+                                                    {% else %}
+                                                        收單
+                                                    {% endif %}
+                                                </td>
+                                            </tr>
+
+                                        {% empty %}
+                                            <p>無團可跟,自已<button type="button" onClick="javascript:location.href='/order'" class="btn btn-success">開一個</button></p>
+                                        {% endfor %}
+
+                                    </tbody>
+                                </table>
+
+                            </div>
+                            </div>
+                        </div>
+
+
+
+                </div>
+                <!-- /.row -->
+            </div>
+            <!-- /.container-fluid -->
+        </div>
+
+
+
+          <script type="text/javascript">
+
+          $(function(){
+
+            // tooltip demo
+            $('.tooltip-demo').tooltip({
+                selector: "[data-toggle=tooltip]",
+                container: "body"
+            })
+
+
+
+
+          });
+
+          </script>
+
+
+        </form>
+      {% endblock %}
